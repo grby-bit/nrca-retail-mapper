@@ -1,0 +1,2 @@
+retailers.json filter=lfs diff=lfs merge=lfs -text
+Retail_Data_Template_With_Formulas.xlsx filter=lfs diff=lfs merge=lfs -text
