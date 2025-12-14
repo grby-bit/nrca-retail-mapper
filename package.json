@@ -1,0 +1,13 @@
+{
+  "name": "police-retailer-dashboard",
+  "version": "1.0.0",
+  "description": "Police Retailer Data Dashboard with Supabase",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build needed - static site'",
+    "start": "echo 'Open index.html in your browser'"
+  },
+  "keywords": ["dashboard", "supabase", "police", "retailers"],
+  "author": "",
+  "license": "MIT"
+}
