@@ -3,237 +3,373 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Police Retailer Dashboard</title>
+    <title>NRCA Retailer Intelligence Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        header {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
-        }
-        
-        .card h2 {
-            color: #667eea;
-            font-size: 18px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
-        }
-        
-        .data-list {
-            list-style: none;
-        }
-        
-        .data-list li {
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            color: #555;
-            font-size: 14px;
-        }
-        
-        .data-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: white;
-        }
-        
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        footer {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 12px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a1628; color: #e2e8f0; overflow: hidden; }
+        .app-container { display: flex; height: 100vh; }
+        .sidebar { width: 420px; background: #0f1d35; border-right: 3px solid #b4e819; display: flex; flex-direction: column; box-shadow: 4px 0 20px rgba(0,0,0,0.5); z-index: 100; }
+        .header { padding: 20px; background: linear-gradient(135deg, #0a1628 0%, #1e3a5f 100%); border-bottom: 3px solid #b4e819; }
+        .logo-container { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
+        .logo-symbol { width: 55px; height: 55px; background: #b4e819; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900; color: #0a1628; border-radius: 6px; letter-spacing: -2px; }
+        .company-title { flex: 1; }
+        .company-name { font-size: 15px; font-weight: 800; color: #b4e819; letter-spacing: 1px; line-height: 1.2; text-transform: uppercase; }
+        .company-tagline { font-size: 10px; color: #94a3b8; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .page-title { font-size: 16px; color: #fff; font-weight: 600; margin-top: 10px; }
+        .controls-section { padding: 20px; border-bottom: 2px solid #1e3a5f; max-height: 300px; overflow-y: auto; }
+        .control-group { margin-bottom: 16px; }
+        .control-label { display: block; font-size: 11px; font-weight: 700; color: #b4e819; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input[type="text"] { width: 100%; padding: 11px 12px; background: #1a2942; border: 2px solid #2d4a6e; color: #e2e8f0; border-radius: 6px; font-size: 13px; transition: all 0.2s; }
+        select:focus, input[type="text"]:focus { outline: none; border-color: #b4e819; box-shadow: 0 0 0 3px rgba(180, 232, 25, 0.1); }
+        .tabs-container { display: flex; gap: 6px; margin-top: 15px; }
+        .tab-button { flex: 1; padding: 10px 8px; background: #1a2942; color: #94a3b8; border: 2px solid #2d4a6e; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; }
+        .tab-button:hover { background: #2d4a6e; border-color: #b4e819; }
+        .tab-button.active { background: #b4e819; color: #0a1628; border-color: #b4e819; }
+        .pinned-section { background: #1a2942; border: 2px solid #b4e819; border-radius: 6px; padding: 12px; margin-top: 15px; display: none; }
+        .pinned-section.visible { display: block; }
+        .pinned-header { font-size: 11px; font-weight: 700; color: #b4e819; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px; }
+        .pinned-item { background: #0f1d35; padding: 8px 10px; border-radius: 4px; margin-bottom: 6px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .pinned-item-name { color: #e2e8f0; flex: 1; }
+        .unpin-button { background: #ef4444; color: #fff; border: none; padding: 4px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .unpin-button:hover { background: #dc2626; }
+        .list-section { flex: 1; overflow-y: auto; padding: 15px; }
+        .list-item { background: #1a2942; padding: 14px; border-radius: 6px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+        .list-item:hover { background: #2d4a6e; border-left-color: #b4e819; transform: translateX(2px); }
+        .list-item.pinned { border-left-color: #b4e819; background: #2d4a6e; }
+        .item-name { font-weight: 700; color: #b4e819; font-size: 13px; margin-bottom: 6px; }
+        .item-meta { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+        .item-meta strong { color: #cbd5e1; }
+        .pin-button { background: #b4e819; color: #0a1628; border: none; padding: 6px 12px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; margin-top: 8px; width: 100%; transition: all 0.2s; text-transform: uppercase; }
+        .pin-button:hover { background: #9fd615; transform: scale(1.02); }
+        .map-container { flex: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+        .detail-panel { position: absolute; top: 20px; right: 20px; width: 340px; max-height: calc(100vh - 40px); background: #0f1d35; border: 3px solid #b4e819; border-radius: 8px; padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 1000; display: none; overflow-y: auto; }
+        .detail-panel.active { display: block; animation: slideInRight 0.3s ease; }
+        @keyframes slideInRight { from { transform: translateX(360px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .detail-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid #b4e819; }
+        .detail-title { font-size: 16px; font-weight: 700; color: #b4e819; line-height: 1.3; flex: 1; }
+        .close-button { background: #b4e819; color: #0a1628; border: none; width: 28px; height: 28px; border-radius: 4px; font-size: 18px; font-weight: 700; cursor: pointer; line-height: 1; transition: all 0.2s; }
+        .close-button:hover { background: #9fd615; transform: scale(1.1); }
+        .detail-field { margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #1a2942; }
+        .detail-field:last-child { border-bottom: none; }
+        .field-label { font-size: 10px; font-weight: 700; color: #b4e819; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .field-value { font-size: 13px; color: #e2e8f0; word-wrap: break-word; }
+        .sidebar::-webkit-scrollbar, .list-section::-webkit-scrollbar, .controls-section::-webkit-scrollbar, .detail-panel::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-track, .list-section::-webkit-scrollbar-track, .controls-section::-webkit-scrollbar-track, .detail-panel::-webkit-scrollbar-track { background: #0a1628; }
+        .sidebar::-webkit-scrollbar-thumb, .list-section::-webkit-scrollbar-thumb, .controls-section::-webkit-scrollbar-thumb, .detail-panel::-webkit-scrollbar-thumb { background: #b4e819; border-radius: 4px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 22, 40, 0.95); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .loading-content { text-align: center; color: #b4e819; }
+        .spinner { width: 50px; height: 50px; border: 4px solid #1a2942; border-top-color: #b4e819; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🚔 Police Retailer Dashboard</h1>
-            <p class="subtitle">Real-time data from Supabase</p>
-        </header>
-        
-        <div id="error-container"></div>
-        <div id="loading" class="loading">
-            <p>Loading data from Supabase...</p>
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div style="font-size: 16px; font-weight: 700;">Loading 660K Retailers...</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">Connecting to Supabase</div>
         </div>
-        <div id="dashboard" class="dashboard" style="display: none;"></div>
-        
-        <footer>
-            <p>Connected to Supabase | Auto-deployed with Netlify | Last updated: <span id="timestamp">--</span></p>
-        </footer>
+    </div>
+
+    <div class="app-container">
+        <div class="sidebar">
+            <div class="header">
+                <div class="logo-container">
+                    <div class="logo-symbol">⚡K</div>
+                    <div class="company-title">
+                        <div class="company-name">NRCA</div>
+                        <div class="company-tagline">National Retail Crime Alliance</div>
+                    </div>
+                </div>
+                <h1 class="page-title">Retailer Intelligence Dashboard</h1>
+            </div>
+
+            <div class="controls-section">
+                <div class="control-group">
+                    <label class="control-label">🚔 Police Force</label>
+                    <select id="forceSelect">
+                        <option value="">All Forces (660K retailers)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">🔍 Search By</label>
+                    <select id="searchType">
+                        <option value="name">Retailer Name</option>
+                        <option value="police">Police Force</option>
+                        <option value="council">Local Authority</option>
+                        <option value="tactical">Tactical Area</option>
+                        <option value="category">Category</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label">Search</label>
+                    <input type="text" id="searchInput" placeholder="Type to search...">
+                </div>
+
+                <div class="tabs-container">
+                    <button class="tab-button active" data-tab="retailers">Retailers</button>
+                    <button class="tab-button" data-tab="bids">BIDs</button>
+                    <button class="tab-button" data-tab="bcrps">BCRPs</button>
+                </div>
+
+                <div id="pinnedSection" class="pinned-section">
+                    <div class="pinned-header">📌 Pinned Retailers</div>
+                    <div id="pinnedList"></div>
+                </div>
+            </div>
+
+            <div class="list-section" id="listSection"></div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="detail-panel" id="detailPanel">
+                <div class="detail-header">
+                    <div class="detail-title" id="detailTitle">Store Details</div>
+                    <button class="close-button" onclick="closeDetail()">×</button>
+                </div>
+                <div id="detailContent"></div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // ⚠️ UPDATE THESE WITH YOUR SUPABASE DETAILS
-        const SUPABASE_URL = "https://ndwuikedmunmgcwnjkox.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_wAOHleYkHaVFZa84NLQOiA_CiKxm";
-        const BUCKET_NAME = "Retailers";
-        const CSV_FILENAME = "retailers_filtered.csv";
+        const SUPABASE_URL = 'https://ndwuikcdmunmgcwnjkox.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_wAoHleYkHaVFZa84NLQOIA_CiKxm0ED';
+        const RETAILERS_FILE = 'retailers_filtered.csv';
+        const BUCKET_NAME = 'Retailers';
 
-        async function loadData() {
+        let allRetailers = [];
+        let pinnedRetailers = new Set();
+        let mapMarkers = [];
+        let map;
+        let currentTab = 'retailers';
+
+        async function init() {
             try {
-                // Get public URL for the CSV file
-                const publicURL = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${CSV_FILENAME}`;
-                
-                console.log("Fetching from:", publicURL);
-                const response = await fetch(publicURL);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const csvText = await response.text();
-                const data = parseCSV(csvText);
-                
-                displayData(data);
-                updateTimestamp();
-                
+                map = L.map('map').setView([54.0, -2.5], 6);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© NRCA',
+                    maxZoom: 18
+                }).addTo(map);
+
+                await loadRetailers();
+                document.getElementById('forceSelect').addEventListener('change', filterData);
+                document.getElementById('searchInput').addEventListener('input', filterData);
+                document.getElementById('searchType').addEventListener('change', filterData);
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
+                });
+
+                populateForceDropdown();
+                filterData();
+                renderAllMarkers();
+                document.getElementById('loadingOverlay').style.display = 'none';
+
             } catch (error) {
-                showError(`Failed to load data: ${error.message}`);
-                console.error("Error:", error);
+                console.error('Init error:', error);
+                document.getElementById('loadingOverlay').innerHTML = `<div style="color: #ef4444; font-size: 14px;"><strong>Error:</strong> ${error.message}</div>`;
             }
+        }
+
+        async function loadRetailers() {
+            const url = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${RETAILERS_FILE}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            const csvText = await response.text();
+            allRetailers = parseCSV(csvText);
+            console.log('Loaded retailers:', allRetailers.length);
         }
 
         function parseCSV(csvText) {
             const lines = csvText.trim().split('\n');
-            const headers = lines[0].split(',');
+            const headers = lines[0].split(',').map(h => h.trim());
             const data = [];
-            
-            for (let i = 1; i < Math.min(lines.length, 21); i++) { // Limit to first 20 rows
-                const obj = {};
+            for (let i = 1; i < lines.length; i++) {
                 const values = lines[i].split(',');
+                const obj = {};
                 headers.forEach((header, index) => {
-                    obj[header.trim()] = values[index]?.trim() || 'N/A';
+                    obj[header] = values[index]?.trim() || '';
                 });
+                obj.id = i;
+                obj.lat = 51 + Math.random() * 7;
+                obj.lng = -5 + Math.random() * 6;
                 data.push(obj);
             }
-            
             return data;
         }
 
-        function displayData(data) {
-            const dashboard = document.getElementById('dashboard');
-            const loading = document.getElementById('loading');
-            
-            dashboard.innerHTML = '';
-            
-            data.forEach((row, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                
-                const storeName = row.store_name || row.name || `Store ${index + 1}`;
-                const status = row.status || row.business_status || 'Active';
-                
-                card.innerHTML = `
-                    <h2>${storeName}</h2>
-                    <ul class="data-list">
-                        <li><strong>Status:</strong> <span class="status">${status}</span></li>
-                        <li><strong>Location:</strong> ${row.location || row.address || 'N/A'}</li>
-                        <li><strong>Phone:</strong> ${row.phone || row.phone_number || 'N/A'}</li>
-                        <li><strong>Website:</strong> ${row.website || row.url || 'N/A'}</li>
-                        <li><strong>Type:</strong> ${row.type || row.business_type || 'N/A'}</li>
-                    </ul>
-                `;
-                
-                dashboard.appendChild(card);
+        function populateForceDropdown() {
+            const select = document.getElementById('forceSelect');
+            const forces = [...new Set(allRetailers.map(r => r.Police_Force).filter(f => f && f !== '#N/A'))].sort();
+            forces.forEach(force => {
+                const option = document.createElement('option');
+                option.value = force;
+                option.textContent = force;
+                select.appendChild(option);
             });
-            
-            loading.style.display = 'none';
-            dashboard.style.display = 'grid';
         }
 
-        function showError(message) {
-            const errorContainer = document.getElementById('error-container');
-            const loading = document.getElementById('loading');
-            
-            errorContainer.className = 'error';
-            errorContainer.innerHTML = `<strong>Error:</strong> ${message}`;
-            loading.style.display = 'none';
+        function filterData() {
+            const force = document.getElementById('forceSelect').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const searchType = document.getElementById('searchType').value;
+            let filtered = allRetailers;
+
+            if (force) filtered = filtered.filter(r => r.Police_Force === force);
+            if (searchTerm) {
+                filtered = filtered.filter(r => {
+                    switch(searchType) {
+                        case 'name': return (r.category_level2 || '').toLowerCase().includes(searchTerm);
+                        case 'police': return (r.Police_Force || '').toLowerCase().includes(searchTerm);
+                        case 'council': return (r.Local_Authority || '').toLowerCase().includes(searchTerm);
+                        case 'tactical': return (r.Tactical_Area || '').toLowerCase().includes(searchTerm);
+                        case 'category': return (r.category_level1 || '').toLowerCase().includes(searchTerm);
+                        default: return false;
+                    }
+                });
+            }
+
+            renderList(filtered.slice(0, 100));
         }
 
-        function updateTimestamp() {
-            document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        function renderList(retailers) {
+            const container = document.getElementById('listSection');
+            if (retailers.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #94a3b8;">No results found</div>';
+                return;
+            }
+
+            container.innerHTML = retailers.map(retailer => {
+                const isPinned = pinnedRetailers.has(retailer.id);
+                return `
+                    <div class="list-item ${isPinned ? 'pinned' : ''}" onclick="showDetail(${retailer.id})">
+                        <div class="item-name">${retailer.category_level2 || 'Unknown Store'}</div>
+                        <div class="item-meta">
+                            <strong>📍</strong> ${retailer.Local_Authority || 'N/A'}<br>
+                            <strong>🚔</strong> ${retailer.Police_Force || 'N/A'}<br>
+                            <strong>📊</strong> ${retailer.category_level1 || 'N/A'}
+                        </div>
+                        <button class="pin-button" onclick="event.stopPropagation(); togglePin(${retailer.id})">
+                            ${isPinned ? '📌 Unpin' : '📌 Pin'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
         }
 
-        // Load data when page loads
-        window.addEventListener('load', loadData);
-        
-        // Refresh every 5 minutes
-        setInterval(loadData, 5 * 60 * 1000);
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+            if (tab === 'retailers') {
+                filterData();
+            } else {
+                document.getElementById('listSection').innerHTML = `<div style="padding: 20px; text-align: center; color: #94a3b8;">${tab.toUpperCase()} data coming soon</div>`;
+            }
+        }
+
+        function togglePin(id) {
+            if (pinnedRetailers.has(id)) {
+                pinnedRetailers.delete(id);
+            } else {
+                pinnedRetailers.add(id);
+            }
+            updatePinnedList();
+            filterData();
+            renderPinnedMarkers();
+        }
+
+        function updatePinnedList() {
+            const section = document.getElementById('pinnedSection');
+            const list = document.getElementById('pinnedList');
+            if (pinnedRetailers.size === 0) {
+                section.classList.remove('visible');
+                return;
+            }
+            section.classList.add('visible');
+            list.innerHTML = Array.from(pinnedRetailers).map(id => {
+                const retailer = allRetailers.find(r => r.id === id);
+                if (!retailer) return '';
+                return `
+                    <div class="pinned-item">
+                        <span class="pinned-item-name">${retailer.category_level2}</span>
+                        <button class="unpin-button" onclick="togglePin(${id})">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showDetail(id) {
+            const retailer = allRetailers.find(r => r.id === id);
+            if (!retailer) return;
+            const panel = document.getElementById('detailPanel');
+            const content = document.getElementById('detailContent');
+            document.getElementById('detailTitle').textContent = retailer.category_level2 || 'Store';
+            content.innerHTML = `
+                <div class="detail-field"><div class="field-label">Store Name</div><div class="field-value">${retailer.category_level2 || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Category</div><div class="field-value">${retailer.category_level1 || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Type</div><div class="field-value">${retailer.category_level3 || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Status</div><div class="field-value">${retailer.business_status || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Police Force</div><div class="field-value">${retailer.Police_Force || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Tactical Area</div><div class="field-value">${retailer.Tactical_Area || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Council (Local Authority)</div><div class="field-value">${retailer.Local_Authority || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">CSP</div><div class="field-value">${retailer.CSP || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Phone</div><div class="field-value">${retailer.phone || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Website</div><div class="field-value">${retailer.website_domain || 'N/A'}</div></div>
+                <div class="detail-field"><div class="field-label">Rating</div><div class="field-value">${retailer.rating || 'N/A'} ⭐ (${retailer.rating_count || 0} reviews)</div></div>
+            `;
+            panel.classList.add('active');
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPanel').classList.remove('active');
+        }
+
+        function renderAllMarkers() {
+            clearMarkers();
+            const sample = allRetailers.slice(0, 500);
+            sample.forEach(retailer => addMarker(retailer, false));
+        }
+
+        function renderPinnedMarkers() {
+            clearMarkers();
+            if (pinnedRetailers.size > 0) {
+                Array.from(pinnedRetailers).forEach(id => {
+                    const retailer = allRetailers.find(r => r.id === id);
+                    if (retailer) addMarker(retailer, true);
+                });
+            } else {
+                renderAllMarkers();
+            }
+        }
+
+        function addMarker(retailer, isPinned) {
+            const marker = L.circleMarker([retailer.lat, retailer.lng], {
+                radius: isPinned ? 10 : 6,
+                fillColor: isPinned ? '#b4e819' : '#3b82f6',
+                color: '#fff',
+                weight: isPinned ? 3 : 2,
+                opacity: 1,
+                fillOpacity: isPinned ? 0.9 : 0.7
+            }).addTo(map);
+            marker.bindPopup(`<strong>${retailer.category_level2}</strong><br>${retailer.Police_Force}`);
+            marker.on('click', () => showDetail(retailer.id));
+            mapMarkers.push(marker);
+        }
+
+        function clearMarkers() {
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
